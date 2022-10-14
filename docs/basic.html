@@ -14,8 +14,9 @@
   
   document.body.appendChild(canvas);
   
-  
-  
+  var soundA = new Audio('35.mp3');  
+  var soundB = new Audio('38.mp3');  
+
   //
   // ★ここからブロック崩しのプログラム★
   //
@@ -30,16 +31,14 @@
     dy: null,
     
     update: function() {
+      ctx.fillStyle = "#000";
       ctx.fillRect(this.x, this.y, this.width, this.height);
       ctx.fill();
       
       // ボールが壁に当たった時に跳ね返すための条件分岐
       if(this.x < 0 || this.x > canvas.width) this.dx *= -1;
       if(this.y < 0 || this.y > canvas.height) this.dy *= -1;
-      // ボールが地面に落ちた時にゲームを終了させる場合は
-      // if(this.y > canvas.height)　を条件式にプログラムする
-      
-      
+
       this.x += this.dx;
       this.y += this.dy;
     }
@@ -53,6 +52,7 @@
     speed: 0,
     
     update: function() {
+      ctx.fillStyle = "#ec8";
       ctx.fillRect(this.x, this.y, this.width, this.height);
       ctx.fill();
       
@@ -67,8 +67,9 @@
     
     update: function() {
       this.data.forEach(brick => {
-        ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
-        ctx.stroke();
+        ctx.fillStyle = "#8ce";
+        ctx.fillRect(brick.x + 1, brick.y + 1, brick.width - 2, brick.height - 2);
+        ctx.fill();
       })
     }
   }
@@ -84,7 +85,7 @@
     [1,1,1,1,1,1],
     [1,1,1,1,1,1],
   ]
-  
+
   const init = () => {
     paddle.x = canvas.width / 2 - paddle.width / 2;
     paddle.y = canvas.height - paddle.height;
@@ -92,7 +93,7 @@
     ball.x = canvas.width / 2;
     ball.y = canvas.height / 2 + 50;
     ball.dx = ball.speed;
-    ball.dy = ball.speed;
+    ball.dy = -ball.speed;
     
     block.width = canvas.width / level[0].length;
     
@@ -118,17 +119,25 @@
            obj1.y < obj2.y + obj2.height &&
            obj2.y < obj1.y + obj1.height;
   }
-  
+
+  var gameover  = null;
+  var gameclear = null;
+
   // メイン処理
   const loop = () => {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    
+
     paddle.update();
     ball.update();
     block.update();
-    
+
+    if( gameover != null || gameclear != null ){
+      return;
+    }
+
     // ボールとパドルの当たり判定
     if(collide(ball, paddle)) {
+      soundA.play();
       ball.dy *= -1;
       ball.y = paddle.y - ball.height; // パドルの端にボールが当たった時にめり込まないようにする
     }
@@ -136,10 +145,26 @@
     // ボールとブロックの当たり判定
     block.data.forEach((brick, index) => {
       if(collide(ball, brick)) {
+        soundB.play();
         ball.dy *= -1;
         block.data.splice(index, 1);
       }
     })
+
+    // ボールが地面に落ちた時にゲームを終了させる場合
+    if(ball.y > canvas.height && gameover == null){
+      window.alert("おつかれ");
+      gameover = true;
+      ball.dx = 0;
+      ball.dy = 0;
+    }
+
+    if(block.data.length == 0){
+      window.alert("おめでと");
+      gameclear = true;
+      ball.dx = 0;
+      ball.dy = 0;
+    }
     
     window.requestAnimationFrame(loop);
   }
